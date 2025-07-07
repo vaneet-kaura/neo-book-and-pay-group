@@ -47,18 +47,10 @@
 		/		
 		return $model;
 	}, 5, 2);
-	
+	*/
 	
 	add_filter('nbap_staff_model_form_view', function($model) {
-		/*if($model->id > 0) {
-			$service_obj = nbap_object( "NBAP\Services\ServiceGroupService" )->get_by_service_id($model->id);
-			if(is_object($service_obj)) {
-				$model->staff_service_group_id = $service_obj->id;
-				$model->capacity_min = $service_obj->capacity_min;
-				$model->capacity_max = $service_obj->capacity_max;
-			}			
-		}	
-		/		
+		$model->service_groups = nbap_object( "NBAP\Services\StaffServiceServiceGroup" )->get_data($model->id);
 		return $model;
 	}, 5, 2);
-	*/
+	

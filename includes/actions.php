@@ -25,18 +25,21 @@
 		<?php 
 	},5,1);
 	
-	add_action('nbap_staff_form_service_item', function ($service_id, $id_prefix, $idx, $existing_service,$service) {
-		$capacity_min = 0;
-		$capacity_max = 0;
-		if(is_object($existing_service)){
-			$service_obj = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_by_staff_service_id($existing_service->id);
-			$capacity_min = is_object($service_obj)?$service_obj->capacity_min:$capacity_min;
-			$capacity_max = is_object($service_obj)?$service_obj->capacity_max:$capacity_max;
-		}
-		if($service_id > 0 || $capacity_min==0){
-			$service_obj = nbap_object( "NBAP\Services\ServiceGroupService" )->get_by_service_id($service_id);
-			$capacity_min = is_object($service_obj)?$service_obj->capacity_min:$capacity_min;
-			$capacity_max = is_object($service_obj)?$service_obj->capacity_max:$capacity_max;
+	add_action('nbap_staff_form_service_item', function ($model, $id_prefix, $idx, $service_id, $service, $existing_service) {
+		
+		$existing_service_group = array_values(array_filter($model->service_groups, fn($item) => $item->service_id == $service_id));
+		$existing_service_group = $existing_service_group[0] ?? null;
+		
+		$capacity_min = 0; $capacity_max = 0;
+		if(is_object($existing_service_group)) {
+			$capacity_min = $existing_service_group->capacity_min;
+			$capacity_max = $existing_service_group->capacity_max;
+		} else {
+			$service_group_obj = nbap_object( "NBAP\Services\ServiceGroupService" )->get_by_service_id($service_id);
+			if(is_object($service_group_obj)) {
+				$capacity_min = $service_group_obj->capacity_min;
+				$capacity_max = $service_group_obj->capacity_max;
+			}
 		}
 		?>
 		<div class="col form-group mb-3 mb-md-0">
@@ -51,44 +54,36 @@
 		</div>
 		
 		<?php 
-	},5,5);
+	},5,6);
 	
 	add_action('nbap_staff_model_save_after', function ($model) {
 		if(count($model->services) > 0){
-				$add_services = []; $remove_services = [];
-				foreach($model->services as $tmp_service){
-					$service = array("staff_id"=>$id,	
-									 "id"=>isset($tmp_service['id'])?$tmp_service['id']:NULL,		
-									 "price"=>isset($tmp_service['price'])?$tmp_service['price']:NULL,		
-									 "deposit"=>isset($tmp_service['deposit'])?$tmp_service['deposit']:NULL,	
-									 "service_id"=>isset($tmp_service['service_id'])?$tmp_service['service_id']:NULL,	
-									 );
-					
-					if(isset($service['service_id']))
-						array_push($add_services, $service);
-					else if(isset($service['id']) && intval($service['id']) > 0) 
-						array_push($remove_services, $service['id']);
-				}
-				
-				$result = true;
-				if($result !== FALSE && count($remove_services) > 0){
-					$result = $this->staff_service_service->delete_ids($remove_services);
-					if($result === FALSE)
-						$this->response->error($this->db->last_error);					
-				}
-				
-				if($result !== FALSE && count($add_services) > 0){
-					$result = $this->staff_service_service->insert_batch($add_services);
-					var_dump($add_services);exit;
-					if($result === FALSE)
-						$this->response->error($this->db->last_error);
-				}				
+			$staff_service_service_group = nbap_object("NBAP\Services\StaffServiceServiceGroup");
+			$add_services = []; $remove_services = [];
+			foreach($model->services as $tmp_service){
+				if(isset($tmp_service['service_id']))
+					array_push($add_services, array("id" => isset($tmp_service['id'])?$tmp_service['id']:NULL,		
+						"staff_id" => $model->id,	
+						"service_id" => isset($tmp_service['service_id'])?$tmp_service['service_id']:NULL,	
+						"capacity_min" => isset($tmp_service['capacity_min'])?$tmp_service['capacity_min']:NULL,		
+						"capacity_max" => isset($tmp_service['capacity_max'])?$tmp_service['capacity_max']:NULL,	
+					));
+				else if(isset($tmp_service['id']) && intval($tmp_service['id']) > 0) 
+					array_push($remove_services, $tmp_service['id']);
 			}
 			
-		$result = nbap_object( "NBAP\Services\StaffServiceGroupService" )->insert_batch();
-		if( $result->is_error() ){
-			nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( $result->get_message(), "error");
-			exit;
+			$result = true;
+			if($result !== FALSE && count($remove_services) > 0){
+				$result = $staff_service_service_group->delete_ids($remove_services);
+				if($result === FALSE)
+					$this->response->error($this->db->last_error);					
+			}
+			
+			if($result !== FALSE && count($add_services) > 0){
+				$result = $staff_service_service_group->insert_batch($add_services);
+				if($result === FALSE)
+					$this->response->error($this->db->last_error);
+			}
 		}
 	},5,1);
 	
