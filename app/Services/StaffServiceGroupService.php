@@ -2,7 +2,7 @@
 namespace NBAP\Services;
 use NBAP\Db\DatabaseQuery;
 
-class StaffServiceServiceGroup extends DatabaseQuery {
+class StaffServiceGroupService extends DatabaseQuery {
 	protected string $table_name = NBAP_TB_STAFF_SERVICE_GROUP;
 	private object $response;
 	
@@ -33,7 +33,7 @@ class StaffServiceServiceGroup extends DatabaseQuery {
 		return $data['rows'];
 	}
 	
-	public function get_service_frontend(int $staff_service_group_id): object|null {
+	public function get_service_frontend(int $staff_id, int $service_id): object|null {
 		$columns = array(
 			'm.id'			=> 'id',
 			's.id'			=> 'service_id',
@@ -49,7 +49,8 @@ class StaffServiceServiceGroup extends DatabaseQuery {
 		);
 		return $this->select($columns)
 			->join(array("s" => NBAP_TB_SERVICE), "s.id = m.service_id")
-			->where("m.id","=", $staff_service_group_id)
+			->where("m.staff_id","=", $staff_id)
+			->where("m.service_id","=", $service_id)
 			->get_row();
 	}
 }

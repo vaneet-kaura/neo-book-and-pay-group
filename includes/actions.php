@@ -42,12 +42,12 @@
 			}
 		}
 		?>
-		<div class="col form-group mb-3 mb-md-0">
+		<div class="col form-group mb-3">
 			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->render( __( "Min Capacity", "neo-book-and-pay-group" ), $id_prefix."capacity_min", array("class" => "d-lg-none"))?>
 			<?php nbap_object("NBAP\Helpers\Components\FormInputNumber")->render("services[".$idx."][capacity_min]", $capacity_min, array_merge((is_object($existing_service) ? array() : array("disabled" => "disabled")), array("id" => $id_prefix."capacity_min", "class" => "form-control no-spinner", "min" => 1)), array("required" => __("Please enter Capacity Min", "neo-book-and-pay-group"), "range" => __("Capacity min should be greater than or equals 1", "neo-book-and-pay-group"), "range-min" => 1))?>
 			<?php nbap_object("NBAP\Helpers\Components\FormValidation")->render("services[".$idx."][capacity_min]")?>
 		</div>
-		<div class="col form-group mb-3 mb-md-0">
+		<div class="col form-group mb-3">
 			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->render( __( "Max Capacity", "neo-book-and-pay-group" ), $id_prefix."capacity_max", array("class" => "d-lg-none"))?>
 			<?php nbap_object("NBAP\Helpers\Components\FormInputNumber")->render("services[".$idx."][capacity_max]", $capacity_max, array_merge((is_object($existing_service) ? array() : array("disabled" => "disabled")), array("id" => $id_prefix."capacity_max", "class" => "form-control no-spinner", "min" => 1)), array("required" => __("Please enter Capacity Max", "neo-book-and-pay-group"), "range" => __("Capacity max should be greater than or equals 1", "neo-book-and-pay-group"), "range-min" => 1))?>
 			<?php nbap_object("NBAP\Helpers\Components\FormValidation")->render("services[".$idx."][capacity_max]")?>
@@ -56,19 +56,24 @@
 		<?php 
 	},5,6);
 	
+	
 	add_action('nbap_staff_model_save_after', function ($model) {
 		if(count($model->services) > 0){
-			$staff_service_service_group = nbap_object("NBAP\Services\StaffServiceServiceGroup");
+			$staff_service_service_group = nbap_object("NBAP\Services\StaffServiceGroupService");
 			$add_services = []; $remove_services = [];
 			foreach($model->services as $tmp_service){
-				if(isset($tmp_service['service_id']))
-					array_push($add_services, array("id" => isset($tmp_service['id'])?$tmp_service['id']:NULL,		
-						"staff_id" => $model->id,	
-						"service_id" => isset($tmp_service['service_id'])?$tmp_service['service_id']:NULL,	
-						"capacity_min" => isset($tmp_service['capacity_min'])?$tmp_service['capacity_min']:NULL,		
-						"capacity_max" => isset($tmp_service['capacity_max'])?$tmp_service['capacity_max']:NULL,	
+				if(isset($tmp_service['service_id']) && isset($tmp_service['capacity_min']) && isset($tmp_service['capacity_max'])) {
+					if(intval($tmp_service['capacity_min']) > intval($tmp_service['capacity_max'])) {
+						nbap_object( "NBAP\Helpers\Components\InfoMessage" )->return_message(__( 'Max capacity should be greater than min capacity', 'neo-book-and-pay-group' ), "error" );						
+						return;
+					}
+					array_push($add_services, array("id" => isset($tmp_service['id'])?$tmp_service['id']:0,
+						"staff_id" => $model->id,
+						"service_id" => $tmp_service['service_id'],
+						"capacity_min" => $tmp_service['capacity_min'],
+						"capacity_max" => $tmp_service['capacity_max']
 					));
-				else if(isset($tmp_service['id']) && intval($tmp_service['id']) > 0) 
+				} else if(isset($tmp_service['id']) && intval($tmp_service['id']) > 0) 
 					array_push($remove_services, $tmp_service['id']);
 			}
 			
@@ -87,3 +92,26 @@
 		}
 	},5,1);
 	
+	add_action('nbap_booking_form_after_staff', function ($model) {
+		$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
+		$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
+		?>
+		<div class="col form-group mb-3">
+			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "fw-bold"))?>
+			<?php nbap_object("NBAP\Helpers\Components\FormSelect")->renderModel($model,"capacity", range($min_capacity, $max_capacity), "")?>
+			<?php nbap_object("NBAP\Helpers\Components\FormValidation")->renderModel($model,"capacity")?>
+		</div>
+		<?php
+	},5,1);
+	
+	add_action('nbap_save_booking_after', function ($model, $appointment_id){
+		$appointment_group_model = nbap_object( "NBAP\Models\Frontend\AppointmentGroupModel", nbap_post_data());
+		$appointment_group_model->id = 0;
+		$appointment_group_model->appointment_id = $appointment_id;
+		$appointment_group_model->detail_data = "";
+		$result = nbap_object( "NBAP\Services\AppointmentGroupService" )->add_update($appointment_group_model);
+		if( $result->is_error() ){
+			nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( $result->get_message(), "error");
+			exit;
+		}
+	}, 5, 2);
