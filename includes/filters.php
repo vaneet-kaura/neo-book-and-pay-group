@@ -56,6 +56,14 @@
 	}, 5, 2);
 	
 	add_filter('nbap_appointments_additional_data', function ($appointments) {
+		$appointment_ids = array_column($appointments, 'id');
+		$appointment_groups = nbap_object( "NBAP\Services\AppointmentGroupService" )->get_data($appointment_ids);
+		foreach($appointments as $appointment) {
+			$filtered = array_filter($appointment_groups, function ($item) use($appointment) {
+			  return $item->appointment_id === $appointment->id;
+			});
+			$appointment->capacity = $filtered[0]->capacity;
+		}		
 		return $appointments;
 	}, 5, 1);
 	

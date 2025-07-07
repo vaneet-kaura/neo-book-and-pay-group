@@ -11,6 +11,17 @@ class AppointmentGroupService extends DatabaseQuery {
 		$this->response = nbap_object("NBAP\Helpers\Functions\ServiceResponse");
 	}
 	
+	public function get_data(array $appointment_ids) : array {
+		$columns = array(
+			'm.appointment_id'	=> 'appointment_id',			
+			'm.capacity'		=> 'capacity',			
+		);
+		$data = $this->select($columns)
+			->where("appointment_id","IN", $appointment_ids)
+			->get_paged_data();
+		return $data['rows'];		
+	}
+	
 	public function add_update(object $model): object {
 		$data = $model->get_data();		
 		if(intval($model->id) == 0){
