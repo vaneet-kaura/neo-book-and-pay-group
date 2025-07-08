@@ -52,6 +52,10 @@
 					->with_label( __( 'Number of persons', 'neo-book-and-pay-group' ) )
 					->numeric()->with_message( __( 'Invalid number of persons.', 'neo-book-and-pay-group' ) )
 					;
+		foreach($model->view_bag->staff_services as $item) {
+			$item->price_formatted = "";
+			$item->deposit_formatted = "";
+		}			
 		return $model;
 	}, 5, 2);
 	
@@ -105,4 +109,28 @@
 	add_filter('nbap_booking_slot_paging_limit', function ($limit) {
 		return 4;
 	}, 5, 1);
+	
+	add_filter('nbap_booking_sub_total', function ($sub_total, $model, $obj_staff_service) {
+		$capacity = nbap_post_var('capacity', 1);
+		$sub_total = $obj_staff_service->price * $capacity;
+		return $sub_total;
+	}, 5, 3);
+	
+	add_filter('nbap_get_booking_slots', function ($model) {
+		$capacity = nbap_get_var('capacity', 1);
+		$price = floatval($model["price"]) * $capacity;
+		$deposit = floatval($model["deposit"]);
+		$deposit = $price * $deposit * 0.01;
+		$obj_format = nbap_object('NBAP\Helpers\Functions\Format');
+		$model["price_formatted"] = $obj_format->currency($price);
+		$model["deposit_formatted"] = $obj_format->currency($deposit);
+		return $model;
+	}, 5, 3);
+	
+	add_filter('add_appointment_data', function ($data) {
+		$capacity = nbap_post_var('capacity', 1);
+		$data['sub_total'] = floatval($data['service_price']) * $capacity;
+		$data['total'] = floatval($data['service_price']) * $capacity;
+		return $data;
+	}, 5, 3);
 	
