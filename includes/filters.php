@@ -49,8 +49,8 @@
 		$model->capacity = 1;
 		$model->view_bag->staff_service_groups = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_all()['rows'];
 		$model->obj_validator->rule_for( 'capacity' )
-					->with_label( __( 'Number of persons', 'neo-book-and-pay' ) )
-					->numeric()->with_message( __( 'Invalid number of persons.', 'neo-book-and-pay' ) )
+					->with_label( __( 'Number of persons', 'neo-book-and-pay-group' ) )
+					->numeric()->with_message( __( 'Invalid number of persons.', 'neo-book-and-pay-group' ) )
 					;
 		return $model;
 	}, 5, 2);
@@ -59,10 +59,11 @@
 		$appointment_ids = array_column($appointments, 'id');
 		$appointment_groups = nbap_object( "NBAP\Services\AppointmentGroupService" )->get_data($appointment_ids);
 		foreach($appointments as $appointment) {
-			$filtered = array_filter($appointment_groups, function ($item) use($appointment) {
-			  return $item->appointment_id === $appointment->id;
-			});
-			$appointment->capacity = $filtered[0]->capacity;
+			$filtered = array_values(array_filter($appointment_groups, function ($item) use($appointment) {
+				return $item->appointment_id === $appointment->id;
+			}));
+			if(count($filtered) == 1) 
+				$appointment->capacity = $filtered[0]->capacity;
 		}		
 		return $appointments;
 	}, 5, 1);
@@ -77,14 +78,15 @@
 		foreach($day_slots as $time => $label) {
 			$min = is_object($staff_service_group) ? $staff_service_group->capacity_min : 1;
 			$max = is_object($staff_service_group) ? $staff_service_group->capacity_max : 1;
-			$booked = 0;
+			$booked = $label['status'] == 'booked' ? array_reduce($label['appointments'], fn($sum, $user) => $sum + $user->capacity, 0) : 0;
 			$available = $max - $booked; 
 			$label['capacity_booked'] = $booked;
 			$label['capacity_available'] = $available;
 			$label['capacity_min'] = $min;
 			$label['capacity_max'] = $max;
-			if($capacity <= $available)
-				$slots[$time] = $label;
+			if($capacity <= $available && $label['status'] == 'booked') 
+				$label['status'] = 'available';
+			$slots[$time] = $label;
 		}			
 		return $slots;
 	}, 5, 4);
@@ -98,10 +100,6 @@
 		$capacity = nbap_get_var('capacity', 1);
 		$label .= " for ".$capacity." persons";
 		return $label;
-	}, 5, 3);
-	
-	add_filter('nbap_is_slot_booked', function ($is_booked, $appointment, $slot) {
-		return $is_booked;
 	}, 5, 3);
 	
 	add_filter('nbap_booking_slot_paging_limit', function ($limit) {

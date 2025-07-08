@@ -35,7 +35,7 @@ function nbap_group_activate() {
     $plugin_data = get_plugin_data(WP_PLUGIN_DIR . '/' . NBAP_GRP_DEPENDENCY);
     if (version_compare($plugin_data['Version'], $required_version, '<')) {
         deactivate_plugins(plugin_basename(__FILE__));
-        wp_die('Required plugin version is too old. Please update to at least version ' . $required_version . '.');
+        wp_die(esc_html('Required plugin version is too old. Please update to at least version ' . $required_version . '.'));
     }
 
 	global $wpdb;
@@ -47,10 +47,13 @@ function nbap_group_activate() {
 		'version' => 1,
 		'status' => 1,
 	];
-	$exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM {$table_name} WHERE directory = %s", $directory));
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+	$exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM %i WHERE directory = %s", $table_name, $directory));
 	if ($exists) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update($table_name, $data, [ 'directory' => $directory ]);
 	} else {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->insert($table_name, $data);
 	}
 }
@@ -61,9 +64,9 @@ function nbap_group_deactivate() {
 	$table_name = $wpdb->prefix .NBAP_GRP_PLUGIN_PREFIX . 'addon';
 	$data = [ 'status' => 0 ];
 	$where = [ 'directory' => basename(NBAP_GRP_LOCATION_PATH) ];
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->update($table_name, $data, $where);
 }
 
-include_once NBAP_GRP_LOCATION_PATH . "/includes/functions.php";	
 include_once NBAP_GRP_LOCATION_PATH . "/includes/filters.php";	
 include_once NBAP_GRP_LOCATION_PATH . "/includes/actions.php";

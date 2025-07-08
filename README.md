@@ -1,4 +1,4 @@
-﻿=== Neo Book and Pay ===
+﻿=== Neo Book and Pay - Group Addon ===
 Contributors: Neoventis
 Tags: booking plugin, booking calendar, appointment booking, appointment calendar, appointment scheduling
 Tested up to: 6.8
@@ -29,7 +29,7 @@ With the default configuration, this plugin, in itself, does not:
 
 == Installation ==
 
-1. Upload the entire `neo-book-and-pay` folder to the `/wp-content/plugins/` directory.
+1. Upload the entire `neo-book-and-pay-group` folder to the `/wp-content/plugins/` directory.
 1. Activate the plugin through the **Plugins** screen (**Plugins > Installed Plugins**).
 
 You will find **Neo Booking** menu in your WordPress admin screen.

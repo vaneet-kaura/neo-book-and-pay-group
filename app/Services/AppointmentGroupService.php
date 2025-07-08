@@ -12,6 +12,7 @@ class AppointmentGroupService extends DatabaseQuery {
 	}
 	
 	public function get_data(array $appointment_ids) : array {
+		if(count($appointment_ids) == 0) return [];
 		$columns = array(
 			'm.appointment_id'	=> 'appointment_id',			
 			'm.capacity'		=> 'capacity',			
@@ -27,7 +28,7 @@ class AppointmentGroupService extends DatabaseQuery {
 		if(intval($model->id) == 0){
 			$id = $this->insert($data);
 			if($id > 0)				
-				$this->response->insert_success($id, __("Appointment Group booked successfully", "neo-book-and-pay"));
+				$this->response->insert_success($id, __("Appointment Group booked successfully", "neo-book-and-pay-group"));
 			else
 				$this->response->error($this->db->last_error);
 		} else {
@@ -36,7 +37,7 @@ class AppointmentGroupService extends DatabaseQuery {
 			if($updated === FALSE)
 				$this->response->error($this->db->last_error);
 			else
-				$this->response->update_success($id, __("Appointment Group updated successfully", "neo-book-and-pay"));
+				$this->response->update_success($id, __("Appointment Group updated successfully", "neo-book-and-pay-group"));
 		}
 		return $this->response;
 	}
@@ -48,7 +49,7 @@ class AppointmentGroupService extends DatabaseQuery {
 		elseif($deleted===0)
 			$this->response->error("No such record found");
 		else
-			$this->response->delete_success($id, __("Appointment deleted successfully", "neo-book-and-pay"));
+			$this->response->delete_success($id, __("Appointment deleted successfully", "neo-book-and-pay-group"));
 			
 		return $this->response;
 	}
