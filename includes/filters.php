@@ -67,7 +67,9 @@
 				return $item->appointment_id === $appointment->id;
 			}));
 			if(count($filtered) == 1) 
-				$appointment->capacity = $filtered[0]->capacity;
+				$appointment->capacity = (int)$filtered[0]->capacity;
+			else
+				$appointment->capacity = 1;
 		}		
 		return $appointments;
 	}, 5, 1);
@@ -82,7 +84,7 @@
 		foreach($day_slots as $time => $label) {
 			$min = is_object($staff_service_group) ? $staff_service_group->capacity_min : 1;
 			$max = is_object($staff_service_group) ? $staff_service_group->capacity_max : 1;
-			$booked = $label['status'] == 'booked' ? array_reduce($label['appointments'], fn($sum, $user) => $sum + $user->capacity, 0) : 0;
+			$booked = $label['status'] == 'booked' ? array_reduce($label['appointments'], fn($sum, $appointment) => $sum + $appointment->capacity, 0) : 0;
 			$available = $max - $booked; 
 			$label['capacity_booked'] = $booked;
 			$label['capacity_available'] = $available;
@@ -133,4 +135,5 @@
 		$data['total'] = floatval($data['service_price']) * $capacity;
 		return $data;
 	}, 5, 3);
+	
 	

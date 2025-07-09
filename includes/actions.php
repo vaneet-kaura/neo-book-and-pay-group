@@ -104,14 +104,16 @@
 		<?php
 	},5,1);
 	
-	add_action('nbap_save_booking_after', function ($model, $appointment_id){
-		$appointment_group_model = nbap_object( "NBAP\Models\Frontend\AppointmentGroupModel", nbap_post_data());
-		$appointment_group_model->id = 0;
-		$appointment_group_model->appointment_id = $appointment_id;
-		$appointment_group_model->detail_data = "";
-		$result = nbap_object( "NBAP\Services\AppointmentGroupService" )->add_update($appointment_group_model);
-		if( $result->is_error() ){
-			nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( $result->get_message(), "error");
-			exit;
+	add_action('nbap_save_booking_after', function ($model, $appointment_ids) {
+		foreach($appointment_ids as $appointment_id) {
+			$appointment_group_model = nbap_object( "NBAP\Models\Frontend\AppointmentGroupModel", nbap_post_data());
+			$appointment_group_model->id = 0;
+			$appointment_group_model->appointment_id = $appointment_id;
+			$appointment_group_model->detail_data = "";
+			$result = nbap_object( "NBAP\Services\AppointmentGroupService" )->add_update($appointment_group_model);
+			if( $result->is_error() ){
+				nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( $result->get_message(), "error");
+				exit;
+			}
 		}
 	}, 5, 2);
