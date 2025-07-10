@@ -45,7 +45,7 @@
 	}, 5, 2);
 	
 	
-	add_filter('nbap_booking_model_view', function($model) {
+	add_filter('nbap_booking_steps_model_view', function($model) {
 		$model->capacity = 1;
 		$model->view_bag->staff_service_groups = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_all()['rows'];
 		$model->obj_validator->rule_for( 'capacity' )
@@ -56,6 +56,16 @@
 			$item->price_formatted = "";
 			$item->deposit_formatted = "";
 		}			
+		return $model;
+	}, 5, 2);
+	
+	add_filter('nbap_booking_calendar_model_view', function($model) {
+		$model->capacity = 1;
+		$model->view_bag->staff_service_groups = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_all()['rows'];
+		$model->obj_validator->rule_for( 'capacity' )
+					->with_label( __( 'Number of persons', 'neo-book-and-pay-group' ) )
+					->numeric()->with_message( __( 'Invalid number of persons.', 'neo-book-and-pay-group' ) )
+					;		
 		return $model;
 	}, 5, 2);
 	
@@ -108,7 +118,7 @@
 		return $label;
 	}, 5, 3);
 	
-	add_filter('nbap_booking_slot_paging_limit', function ($limit) {
+	add_filter('nbap_booking_steps_slots_paging_limit', function ($limit) {
 		return 4;
 	}, 5, 1);
 	
@@ -118,7 +128,7 @@
 		return $sub_total;
 	}, 5, 3);
 	
-	add_filter('nbap_get_booking_slots', function ($model) {
+	add_filter('nbap_get_booking_steps_slots', function ($model) {
 		$capacity = nbap_get_var('capacity', 1);
 		$price = floatval($model["price"]) * $capacity;
 		$deposit = floatval($model["deposit"]);
@@ -126,6 +136,25 @@
 		$obj_format = nbap_object('NBAP\Helpers\Functions\Format');
 		$model["price_formatted"] = $obj_format->currency($price);
 		$model["deposit_formatted"] = $obj_format->currency($deposit);
+		return $model;
+	}, 5, 3);
+	
+	add_filter('nbap_get_booking_calendar_slots', function ($model) {
+		foreach($model as $date => $slots):
+			foreach($slots as $time => $slot_info):
+				$capacity_min = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_min']);
+				$capacity_max = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_max']);
+				$capacity_booked = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_booked']);
+				$capacity_available = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_available']);
+				$slot_info['capacity_booked'] = $capacity_booked;
+				$slot_info['capacity_min'] = $capacity_min;
+				$slot_info['capacity_max'] = $capacity_max;
+				$slot_info['available_count'] = $capacity_available;
+				$slots[$time] = $slot_info;
+			endforeach;
+			$model[$date] = $slots;
+		endforeach;		
+		//var_dump($model);exit;
 		return $model;
 	}, 5, 3);
 	

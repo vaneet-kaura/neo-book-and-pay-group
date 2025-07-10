@@ -92,28 +92,38 @@
 		}
 	},5,1);
 	
-	add_action('nbap_booking_form_after_staff', function ($model) {
+	add_action('nbap_booking_steps_form_after_staff', function ($model) {
 		$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
 		$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
 		?>
 		<div class="col form-group mb-3">
-			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "fw-bold"))?>
+			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "form-label fw-bold"))?>
 			<?php nbap_object("NBAP\Helpers\Components\FormSelect")->renderModel($model,"capacity", range($min_capacity, $max_capacity), "")?>
 			<?php nbap_object("NBAP\Helpers\Components\FormValidation")->renderModel($model,"capacity")?>
 		</div>
 		<?php
 	},5,1);
 	
-	add_action('nbap_save_booking_after', function ($model, $appointment_ids) {
-		foreach($appointment_ids as $appointment_id) {
-			$appointment_group_model = nbap_object( "NBAP\Models\Frontend\AppointmentGroupModel", nbap_post_data());
-			$appointment_group_model->id = 0;
-			$appointment_group_model->appointment_id = $appointment_id;
-			$appointment_group_model->detail_data = "";
-			$result = nbap_object( "NBAP\Services\AppointmentGroupService" )->add_update($appointment_group_model);
-			if( $result->is_error() ){
-				nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( $result->get_message(), "error");
-				exit;
-			}
+	add_action('nbap_booking_calendar_summary_before', function ($model) {
+		$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
+		$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
+		?>
+		<div class="col form-group mb-3">
+			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "form-label fw-bold"))?>
+			<?php nbap_object("NBAP\Helpers\Components\FormSelect")->renderModel($model,"capacity", range($min_capacity, $max_capacity), "")?>
+			<?php nbap_object("NBAP\Helpers\Components\FormValidation")->renderModel($model,"capacity")?>
+		</div>
+		<?php
+	},5,1);
+	
+	add_action('nbap_save_booking_after', function ($model, $appointment_id) {
+		$appointment_group_model = nbap_object( "NBAP\Models\Frontend\AppointmentGroupModel", nbap_post_data());
+		$appointment_group_model->id = 0;
+		$appointment_group_model->appointment_id = $appointment_id;
+		$appointment_group_model->detail_data = "";
+		$result = nbap_object( "NBAP\Services\AppointmentGroupService" )->add_update($appointment_group_model);
+		if( $result->is_error() ){
+			nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( $result->get_message(), "error");
+			exit;
 		}
 	}, 5, 2);
