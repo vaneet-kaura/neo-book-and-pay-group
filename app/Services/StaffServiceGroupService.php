@@ -33,7 +33,7 @@ class StaffServiceGroupService extends DatabaseQuery {
 		return $data['rows'];
 	}
 	
-	public function get_service_frontend(int $staff_id, int $service_id): object|null {
+	public function get_service_frontend(int $staff_id, int $service_id): array {
 		$columns = array(
 			'm.id'			=> 'id',
 			's.id'			=> 'service_id',
@@ -47,10 +47,12 @@ class StaffServiceGroupService extends DatabaseQuery {
 			's.min_time_before_booking' => 'min_time_before_booking',
 			's.min_time_before_cancel' => 'min_time_before_cancel',
 		);
-		return $this->select($columns)
-			->join(array("s" => NBAP_TB_SERVICE), "s.id = m.service_id")
-			->where("m.staff_id","=", $staff_id)
-			->where("m.service_id","=", $service_id)
-			->get_row();
+		$query = $this->select($columns)
+			->join(array("s" => NBAP_TB_SERVICE), "s.id = m.service_id");
+		if($staff_id > 0)
+			$query = $query->where("m.staff_id","=", $staff_id);
+		if($service_id > 0)
+			$query = $query->where("m.service_id","=", $service_id);
+		return $query->get_paged_data()['rows'];
 	}
 }

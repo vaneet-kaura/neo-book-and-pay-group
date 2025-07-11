@@ -61,7 +61,7 @@
 	
 	add_filter('nbap_booking_calendar_model_view', function($model) {
 		$model->capacity = 1;
-		$model->view_bag->staff_service_groups = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_all()['rows'];
+		$model->view_bag->staff_service_groups = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_service_frontend($model->staff_id, $model->id);
 		$model->obj_validator->rule_for( 'capacity' )
 					->with_label( __( 'Number of persons', 'neo-book-and-pay-group' ) )
 					->numeric()->with_message( __( 'Invalid number of persons.', 'neo-book-and-pay-group' ) )
@@ -86,14 +86,18 @@
 	
 	add_filter('nbap_day_slots', function ($day_slots, $date, $staff_id, $service_id) {
 		$slots=[];
-		$staff_service_group = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_service_frontend($staff_id, $service_id);
+		$staff_service_groups = nbap_object( "NBAP\Services\StaffServiceGroupService" )->get_service_frontend($staff_id, $service_id);
+		$staff_service_group = count($staff_service_groups) == 1 ? $staff_service_groups[0] : null;
 		if(!is_object($staff_service_group))
 			$staff_service_group = nbap_object( "NBAP\Services\ServiceGroupService" )->get_by_service_id($service_id);
 		
 		$capacity = nbap_get_var('capacity', 1);
-		foreach($day_slots as $time => $label) {
-			$min = is_object($staff_service_group) ? $staff_service_group->capacity_min : 1;
-			$max = is_object($staff_service_group) ? $staff_service_group->capacity_max : 1;
+		$min = is_object($staff_service_group) ? $staff_service_group->capacity_min : 1;
+		$max = is_object($staff_service_group) ? $staff_service_group->capacity_max : 1;
+		$capacity = $capacity < $min ? $min : $capacity;
+		$capacity = $capacity > $max ? $max : $capacity;
+		
+		foreach($day_slots as $time => $label) {			
 			$booked = $label['status'] == 'booked' ? array_reduce($label['appointments'], fn($sum, $appointment) => $sum + $appointment->capacity, 0) : 0;
 			$available = $max - $booked; 
 			$label['capacity_booked'] = $booked;
@@ -102,8 +106,10 @@
 			$label['capacity_max'] = $max;
 			if($capacity <= $available && $label['status'] == 'booked') 
 				$label['status'] = 'available';
+			else if($capacity > $available && $label['status'] == 'available') 
+				$label['status'] = 'not-available';
 			$slots[$time] = $label;
-		}			
+		}		
 		return $slots;
 	}, 5, 4);
 	
@@ -146,15 +152,16 @@
 				$capacity_max = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_max']);
 				$capacity_booked = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_booked']);
 				$capacity_available = intval($slot_info['staff']['staff_'.$slot_info['staff_id']]['capacity_available']);
+				$capacity_available = $capacity_available < $capacity_min ? 0 : $capacity_available;
 				$slot_info['capacity_booked'] = $capacity_booked;
 				$slot_info['capacity_min'] = $capacity_min;
 				$slot_info['capacity_max'] = $capacity_max;
 				$slot_info['available_count'] = $capacity_available;
+				$slot_info['onClick'] .= "selectCapacityTimeSlot(this);";
 				$slots[$time] = $slot_info;
 			endforeach;
 			$model[$date] = $slots;
-		endforeach;		
-		//var_dump($model);exit;
+		endforeach;
 		return $model;
 	}, 5, 3);
 	
@@ -164,5 +171,15 @@
 		$data['total'] = floatval($data['service_price']) * $capacity;
 		return $data;
 	}, 5, 3);
+	
+	add_filter('nbap_enqueue_scripts', function ($scripts) {
+		$scripts['booking-calendar-capacity'] = array( "../../neo-book-and-pay-group/public/frontend/booking-calendar-capacity.js", array("booking-calendar"), "filetime", true);
+		return $scripts;
+	}, 5, 1);
+	
+	add_filter('nbap_booking_calendar_enqueue_scripts', function ($scripts) {
+		$scripts[] = 'booking-calendar-capacity';
+		return $scripts;
+	}, 5, 1);
 	
 	

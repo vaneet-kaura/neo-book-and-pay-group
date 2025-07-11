@@ -110,7 +110,7 @@
 		?>
 		<div class="col form-group mb-3">
 			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "form-label fw-bold"))?>
-			<?php nbap_object("NBAP\Helpers\Components\FormSelect")->renderModel($model,"capacity", range($min_capacity, $max_capacity), "")?>
+			<?php nbap_object("NBAP\Helpers\Components\FormSelect")->renderModel($model,"capacity", range($min_capacity, $max_capacity), "", ['onchange' => 'updateCapacity(this)'])?>
 			<?php nbap_object("NBAP\Helpers\Components\FormValidation")->renderModel($model,"capacity")?>
 		</div>
 		<?php
@@ -127,3 +127,20 @@
 			exit;
 		}
 	}, 5, 2);
+	
+	add_action('nbap_validate_new_appointment_slot', function($slot) {
+		$capacity = nbap_post_var('capacity', 1);
+		$capacity_available = $slot['capacity_available'];
+		$capacity_min = $slot['capacity_min'];
+		$capacity_max = $slot['capacity_max'];
+		$status = $slot['status'];
+		if($capacity < $capacity_min) {
+			nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( __('Minimum capacity should be ', 'neo-book-and-pay-group').$capacity_min, "error");
+			exit;
+		}
+		
+		if($capacity > $capacity_available || $capacity > $capacity_max) {
+			nbap_object("NBAP\Helpers\Components\InfoMessage")->return_message( __('Invalid capacity', 'neo-book-and-pay-group'), "error");
+			exit;
+		}
+	}, 5, 1);
