@@ -144,3 +144,17 @@
 			exit;
 		}
 	}, 5, 1);
+	
+	add_action('nbap_appointment_view_header_after', function($model) {
+		?>
+			<th><?php esc_html_e("Capactiy", "neo-book-and-pay-group");?></th>
+			<th><?php esc_html_e("Total", "neo-book-and-pay-group");?></th>
+		<?php
+	}, 5, 1);
+	
+	add_action('nbap_appointment_view_item_after', function($model) {
+		?>
+			<td><?php esc_html_e($model->capacity);?></td>
+			<td><?php esc_html_e($model->obj_format->currency($model->total));?></td>
+		<?php
+	}, 5, 1);

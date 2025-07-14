@@ -173,13 +173,20 @@
 	}, 5, 3);
 	
 	add_filter('nbap_enqueue_scripts', function ($scripts) {
-		$scripts['booking-calendar-capacity'] = array( "../../neo-book-and-pay-group/public/frontend/booking-calendar-capacity.js", array("booking-calendar"), "filetime", true);
+		$plugin_dir = basename(constant("NBAP_GRP_LOCATION_PATH"));
+		$scripts['booking-calendar-capacity'] = array( "../../{$plugin_dir}/public/frontend/booking-calendar-capacity.js", array("booking-calendar"), "filetime", true);
 		return $scripts;
 	}, 5, 1);
 	
 	add_filter('nbap_booking_calendar_enqueue_scripts', function ($scripts) {
 		$scripts[] = 'booking-calendar-capacity';
 		return $scripts;
+	}, 5, 1);
+	
+	add_filter('nbap_appointment_model_view_view', function ($model) {
+		$appointment_groups = nbap_object( "NBAP\Services\AppointmentGroupService" )->get_data([$model->id]);
+		$model->capacity = count($appointment_groups) == 1 ? $appointment_groups[0]->capacity : 1;
+		return $model;
 	}, 5, 1);
 	
 	
