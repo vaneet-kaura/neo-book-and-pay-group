@@ -93,8 +93,11 @@
 	},5,1);
 	
 	add_action('nbap_booking_steps_form_after_staff', function ($model) {
-		$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
-		$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
+		$min_capacity = $max_capacity = 1;
+		if(is_array($model->view_bag->staff_service_groups) && count($model->view_bag->staff_service_groups) > 0) {
+			$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
+			$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
+		}
 		?>
 		<div class="col form-group mb-3">
 			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "form-label fw-bold"))?>
@@ -105,8 +108,11 @@
 	},5,1);
 	
 	add_action('nbap_booking_calendar_summary_before', function ($model) {
-		$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
-		$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
+		$min_capacity = $max_capacity = 1;
+		if(is_array($model->view_bag->staff_service_groups) && count($model->view_bag->staff_service_groups) > 0) {
+			$min_capacity = min(array_column($model->view_bag->staff_service_groups, "capacity_min"));
+			$max_capacity = max(array_column($model->view_bag->staff_service_groups, "capacity_max"));		
+		}
 		?>
 		<div class="col form-group mb-3">
 			<?php nbap_object("NBAP\Helpers\Components\FormLabel")->renderModel($model,"capacity", array("class" => "form-label fw-bold"))?>

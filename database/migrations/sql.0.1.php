@@ -1,7 +1,7 @@
 <?php 
  // -- nbap_service --
 $sql = array();
-$sql[] = "CREATE TABLE `{prefix}appointment_group` (
+$sql[] = "CREATE TABLE IF NOT EXISTS `{prefix}appointment_group` (
 	 `id` bigint(20) NOT NULL AUTO_INCREMENT,
 	 `appointment_id` bigint(20) DEFAULT NULL,
 	 `capacity` int(11) DEFAULT NULL,
@@ -11,7 +11,7 @@ $sql[] = "CREATE TABLE `{prefix}appointment_group` (
 	 CONSTRAINT `appointment_group_appointment_id_fk` FOREIGN KEY (`appointment_id`) REFERENCES `{prefix}appointment` (`id`) ON DELETE CASCADE
 ) {charset_collate};";
 
-$sql[] = "CREATE TABLE `{prefix}service_group` (
+$sql[] = "CREATE TABLE IF NOT EXISTS `{prefix}service_group` (
 	 `id` bigint(20) NOT NULL AUTO_INCREMENT,
 	 `service_id` bigint(20) DEFAULT NULL,
 	 `capacity_min` int(11) DEFAULT NULL,
@@ -21,7 +21,7 @@ $sql[] = "CREATE TABLE `{prefix}service_group` (
 	 CONSTRAINT `service_group_service_id_fk` FOREIGN KEY (`service_id`) REFERENCES `{prefix}service` (`id`) ON DELETE CASCADE
 ){charset_collate};";
 
-$sql[] = "CREATE TABLE `{prefix}staff_service_group` (
+$sql[] = "CREATE TABLE IF NOT EXISTS `{prefix}staff_service_group` (
 	 `id` bigint(20) NOT NULL AUTO_INCREMENT,
 	 `staff_id` bigint(20) DEFAULT NULL,
 	 `service_id` bigint(20) DEFAULT NULL,

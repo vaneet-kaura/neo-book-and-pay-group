@@ -5,9 +5,8 @@ function selectCapacityTimeSlot(o) {
 	$currency_symbol = $booking_vars['currency_symbol'];
 	$slot_info = jQuery(o).data("slot-info");
 	$o_capacity = $form.find("[name=capacity]");
-	$capacity = $o_capacity.val();
+	$capacity = $o_capacity.length ? $o_capacity.val() : 1;
 	
-	console.log($slot_info)
 	$capacity_min = parseInt($slot_info.capacity_min);
 	$available_count = parseInt($slot_info.available_count);	
 	
